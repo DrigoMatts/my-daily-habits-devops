@@ -1,0 +1,9 @@
+node_modules
+dist
+*.local
+.DS_Store
+.env
+
+# Traces locais do Claude Code / Stone — nao versionar
+.claude/
+.stone/
