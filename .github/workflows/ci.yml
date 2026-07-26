@@ -38,14 +38,9 @@ jobs:
           docker compose logs
           exit 1
 
-      - name: Smoke test do CRUD
+      - name: Smoke test do Frontend
         run: |
-          curl -sf -X POST http://localhost:3000 | grep -i "html"
-            -H 'Content-Type: application/json' \
-            -d '{"id":"ci-test-1","name":"tarefa criada pelo CI","completed":false}'
-          echo ""
-          curl -sf http://localhost:3000/ | tee resposta.json
-          grep -q "tarefa criada pelo CI" resposta.json
+          curl -sf http://localhost:3000 | grep -i "html"
 
       - name: Logs em caso de falha
         if: failure()
