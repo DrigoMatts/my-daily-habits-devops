@@ -27,7 +27,7 @@ jobs:
       - name: Aguardar a aplicação responder
         run: |
           for i in $(seq 1 30); do
-            if curl -sf http://localhost:3000/api/habits > /dev/null; then
+            if curl -sf http://localhost:3000/items > /dev/null; then
               echo "Aplicacao no ar!"
               exit 0
             fi
@@ -40,11 +40,11 @@ jobs:
 
       - name: Smoke test do CRUD
         run: |
-          curl -sf -X POST http://localhost:3000/api/habits \
+          curl -sf -X POST http://localhost:3000/items \
             -H 'Content-Type: application/json' \
-            -d '{"name":"tarefa criada pelo CI"}'
+            -d '{"id":"ci-test-1","name":"tarefa criada pelo CI","completed":false}'
           echo ""
-          curl -sf http://localhost:3000/api/habits | tee resposta.json
+          curl -sf http://localhost:3000/items | tee resposta.json
           grep -q "tarefa criada pelo CI" resposta.json
 
       - name: Logs em caso de falha
