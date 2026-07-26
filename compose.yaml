@@ -19,8 +19,8 @@ services:
     build: .
     user: root
     ports:
-      - "3000:5173"
-    command: npm run dev -- --host 0.0.0.0 --port 5173
+      - "3000:3000"
+    command: npm start
     environment:
       MYSQL_HOST: db
       MYSQL_USER: ${MYSQL_USER}
