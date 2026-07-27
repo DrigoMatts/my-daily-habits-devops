@@ -40,7 +40,7 @@ jobs:
 
       - name: Smoke test do Frontend
         run: |
-          curl -sf http://localhost:3000 | grep -i "html"
+          curl -sf http://localhost:3000/rota-quebrada | grep -i "html"
 
       - name: Logs em caso de falha
         if: failure()
