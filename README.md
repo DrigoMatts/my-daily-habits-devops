@@ -9,12 +9,28 @@ Cada professor pode trocar por seu próprio projeto: o que importa é o fluxo, n
 o navegador guarda tudo. Isso é de propósito — deploy estático no GitHub Pages, custo zero.
 
 ---
+# Atividade Docker + CI — Rodrigo Matos Gomes
 
-## Pré-requisitos (instalar uma vez, antes da Aula 2)
+> Preencha todos os campos marcados com `[...]` e substitua os prints de exemplo pelos seus. Salve as imagens em `docs/imagens/` e mantenha os nomes de arquivo indicados.
 
-Você só precisa do **Node.js 20** (LTS) — o **npm já vem junto**. O **Vite** e o **React**
-são dependências do projeto: não instale à parte, o `npm install` puxa tudo na versão certa
-(travada no `package-lock.json`).
+**Aluno(a):** Rodrigo Matos Gomes  
+**Turma:** Vespertino  
+**Data:** 26/07/2026 
+**Aplicação usada:** docker/getting-started-app — To-Do em Node.js
+
+**Pré-requisitos sobre o app:**
+- Runtime/Framework: Node.js 20 (Vite / React Frontend)
+- instalação necessária para rodar local: Docker Desktop(Com Docker compose ativo)
+- Início: `node src/index.js`("npm run dev -- --host 0.0.0.0 --port 3000")
+- Rede do Docker: todo-net
+- Porta interna mapeada no host: `3000` (http://localhost:3000)
+- Volume de persistência: todo-mysql-data
+- Banco de dados: MySQL (v8.0), integrado via variáveis de ambiente (MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD MYSQL_DB)
+- Banco padrão: SQLite (`/etc/todos/todo.db`)
+- Banco alternativo: MySQL, via variáveis `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_DB`
+- API: `GET /items`, `POST /items`
+
+---
 
 ```bash
 # Instale o Node 20 (LTS). No WSL/Ubuntu, via nvm (recomendado):
@@ -30,55 +46,103 @@ npm -v
 
 > Alternativa sem nvm: baixe o instalador do Node 20 LTS em https://nodejs.org (traz o npm).
 > Use o **20** porque é a versão do CI e do Docker — assim "roda igual" em todo lugar.
-
-## Rodar local (Aula 2 em diante)
+---
+## 1. Como executar este projeto:
 
 ```bash
 npm install      # instala as dependências (Vite, React etc) na versão do package-lock — uma vez
-npm run dev      # sobe em http://localhost:5173
+npm run dev      # sobe em http://localhost:3000
 npm test         # roda os testes (é o que o CI vai checar)
 npm run build    # gera os estáticos em dist/
-```
 
-## Aula 4 — Conteinerizar com Docker
+## no terminal com wsl (powershell)
+git clone https://github.com/DrigoMatts/my-daily-habits-devops.git  # clonar o repositorio
+cd my-daily-habits-devops # para entrar na pasta
+docker compose up -d --build # Construir e subir containers (App + MySQL)
+docker build -t todo-app:v1 .
+docker run -d -p 3000:3000 --name todo todo-app:v1 # mapeamento e rodar
+docker images # lista imagens
+Acesse: http://localhost:3000
+docker compose ps # verificar containers rodando
+docker compose logs # ver logs
+docker compose down -v # parar e remover a stack com volumes
+docker network inspect todo-net # inspecionar a rede criada
+```
+---
+
+## 2. Imagem e Dockerfile Multi-stage
 
 O `Dockerfile` é **multi-stage**: o estágio 1 compila a app com o Node; o estágio 2
 copia só os estáticos pro nginx (imagem final pequena).
 
+Estágios utilizados: Builder (responsável por instalar as dependências e gerar o build estático do Vite com npm run build) e estágio final (servidor de execução enxuto com Nginx/Node para servir os arquivos estáticos compilados).
+
+Imagem base: node:20-alpine (para o build) e Nginx/Alpine (para runtime leve).
+
+Usuário de execução: root configurado explicitamente no Compose (ou usuário não-root node configurado no Dockerfile).
+
+Tamanho final da imagem: Veja o valor exato rodando docker images no seu terminal (geralmente entre 100MB e 180MB).
+
+## Print 1 - Build + Docker
+
+![docker images](docs/images/builddockerimages.png)
+
+
+## Print 2 - Aplicação rodando
+
+![docker images](docs/imagens)
+
+Por que o multi-stage ajuda?
+
+>> O multi-stage build separa o ambiente de compilação do ambiente de execução, garantindo que código-fonte extra, ferramentas de build e pacotes de desenvolvimento não vão para a imagem final, o que reduz drasticamente seu tamanho e aumenta a segurança do container. 
+
+---
+
+# 3. Volumes e Persistência
+
+Volume Utilizado e Motando em: 
+
 ```bash
-docker build -t projeto-curso .
-docker run -p 8080:80 projeto-curso     # abre em http://localhost:8080
+todo-db/etc/todos
 ```
 
-> O container é pra **aprender portabilidade** ("roda igual em qualquer máquina").
-> O deploy público (Aula 5) NÃO usa o container — o Pages serve os estáticos direto.
-> São dois caminhos diferentes de propósito.
+## Print 3 - Sem Volume 
 
-## Aula 4/5 — CI: ver o pipeline ficar vermelho e depois verde
+![docker images](docs/images/semdados.png)
 
-O workflow `.github/workflows/ci.yml` roda os testes a cada **Pull Request** pra `main`.
+## Print 4 - Com volume
 
-Experimento pra fazer em aula:
-1. Numa branch, abra `src/habits.js` e quebre a `computeStreak` de propósito
-   (ex: troque `streak += 1` por `streak += 2`).
-2. Abra um Pull Request → o **Actions fica vermelho** (o teste de sequência falha).
-3. Desfaça a mudança, faça commit → **fica verde**. Esse é o ciclo do CI.
+![docker images](docs/images/comdados.png)
 
-## Aula 5 — Deploy Contínuo no GitHub Pages
 
-Workflow `.github/workflows/deploy.yml`: quando algo entra na `main`, ele compila e
-publica no Pages.
+Diferença entre docker compose down e docker compose down -v
 
-**Configuração única no repositório** (cada aluno faz uma vez):
-`Settings → Pages → Build and deployment → Source: GitHub Actions`.
+---
 
-Depois de mergear na `main`, a app fica no ar em:
-`https://SEU-USUARIO.github.io/SEU-REPO/` — o link pra mandar pra família.
+# 4. Rede
 
-## Aula 8 — Projeto Final
+Rede Criada como: **`todo-net`**
 
-Em dupla, o fluxo completo de uma feature nova: `branch → Pull Request → CI (verde) →
-merge → deploy automático`, e leitura dos logs do Actions como observabilidade.
+## Print 5 - Docker Network
+
+![docker images](docs/images/dockernetwork.png)
+
+## Print 6 -Dados dentro do MySQL
+
+![docker images](docs/)
+
+
+
+# 5. Docker Compose
+
+## Print 7 -
+
+
+---
+
+# 6. Integração Contínua (Github Actions)
+
+
 
 ---
 
