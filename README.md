@@ -90,7 +90,7 @@ Tamanho final da imagem: Veja o valor exato rodando docker images no seu termina
 
 ## Print 2 - Aplicação rodando
 
-![docker images](docs/imagens)
+![docker images](docs/images/aplicação%20rodando.png)
 
 Por que o multi-stage ajuda?
 
@@ -123,36 +123,58 @@ Diferença entre docker compose down e docker compose down -v
 
 Rede Criada como: **`todo-net`**
 
+### Como funciona a comunicação em rede entre os containers (Docker Network)
+
+Na arquitetura do projeto, a aplicação (container `app`) consegue se comunicar diretamente com o banco de dados (container `db` ou `mysql`) através do recurso de **Redes do Docker** (*Docker Networks*).
+
+#### **Por que o app consegue chamar o host `mysql` (ou `db`) sem saber o IP dele?**
+
+1. **DNS Embutido do Docker (Service Discovery):**
+   Quando conectamos containers a uma rede personalizada (seja criada via `docker network create` ou automaticamente pelo `docker compose`), o Docker habilita um **servidor DNS interno**.
+   
+2. **Resolução de Nomes por Alias/Serviço:**
+   Esse DNS mapeia automaticamente o nome do serviço ou alias da rede (ex: `mysql` ou `db`) para o endereço IP interno atual atribuído ao container do banco na rede privada. 
+
+3. **Comunicação Segura e Isolada:**
+   * A aplicação não precisa hardcodar um endereço IP estático, que poderia mudar a cada reinicialização dos containers.
+   * O banco de dados fica isolado na rede interna do Docker (`todo-net`), sem precisar expor a sua porta padrão (`3306`) diretamente para a máquina host, aumentando a segurança da aplicação.
+
 ## Print 5 - Docker Network
 
 ![docker images](docs/images/dockernetwork.png)
 
 ## Print 6 -Dados dentro do MySQL
 
-![docker images](docs/)
+>> **select * from todo_items; dentro do MySQL:**
+
+![docker images](docs/images/dadosMYSQL.png)
 
 
+---
 
 # 5. Docker Compose
 
-## Print 7 -
+>> O comando docker compose down apenas remove os containers e redes mantendo os volumes de dados intactos, enquanto o docker compose down -v remove também todos os volumes associados, apagando permanentemente os dados persistidos pelo banco. 
 
+**Testes de Persistência**
+
+## Print 7 
+
+![docker images](docs/images/containersativo.png)
+
+## Print 8 
+
+![docker images](docs/images/teste1.png)
+
+## Print 8 
+
+![docker images](docs/images/teste2.png)
 
 ---
 
 # 6. Integração Contínua (Github Actions)
 
-
+**Arquivo do workflow:** `.github/workflows/ci.yml`
 
 ---
 
-## Mapa do repositório
-
-| Arquivo | Pra que serve | Aula |
-|---|---|---|
-| `src/habits.js` | Lógica pura (testável) | 4 |
-| `test/habits.test.js` | Testes que o CI roda | 4 |
-| `Dockerfile` / `nginx.conf` | Conteinerização | 4 |
-| `.github/workflows/ci.yml` | Integração Contínua | 4 |
-| `.github/workflows/deploy.yml` | Entrega Contínua (Pages) | 5 |
-| `src/App.jsx` / `App.css` | A interface da app | — |
