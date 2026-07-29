@@ -116,7 +116,8 @@ todo-db/etc/todos
 
 
 Diferença entre docker compose down e docker compose down -v
-
+>> docker compose down: Destrói os containers e as redes, mas mantém os dados.
+>> docker compose down -v: Destrói os containers, as redes e apaga todos os volumes associados ao projeto.
 ---
 
 # 4. Rede
