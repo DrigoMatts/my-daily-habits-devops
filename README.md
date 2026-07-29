@@ -116,7 +116,8 @@ todo-db/etc/todos
 
 
 Diferença entre docker compose down e docker compose down -v
-
+>> docker compose down: Destrói os containers e as redes, mas mantém os dados.
+>> docker compose down -v: Destrói os containers, as redes e apaga todos os volumes associados ao projeto.
 ---
 
 # 4. Rede
@@ -240,15 +241,20 @@ A experiência prática ao longo de todo o fluxo me deu uma visão clara do cicl
 
 ## CD — Publicação no Docker Hub (EXTRA)
 
-**Print 1 — token criado no Docker Hub** ![CD docker](docs/images/tokencriado.png)
+**Print 1 — token criado no Docker Hub** 
+![CD docker](docs/images/tokencriado.png)
 
-**Print 2 — Secrets cadastrados no GitHub (DOCKERHUB_USERNAME e DOCKERHUB_TOKEN)** ![CD docker](docs/images/secretscadastro.png)
+**Print 2 — Secrets cadastrados no GitHub (DOCKERHUB_USERNAME e DOCKERHUB_TOKEN)** 
+![CD docker](docs/images/secretscadastro.png)
 
-**Print 3 — workflow de CD verde na aba Actions** [cole o print aqui]
+**Print 3 — workflow de CD verde na aba Actions** 
+![CD docker](docs/images/publicardworkflow.png)
 
-**Print 4 — imagem publicada no Docker Hub** [cole o print aqui]
+**Print 4 — imagem publicada no Docker Hub** 
+![CD docker](docs/images/imagemhubdocker.png)
 
-**Print 5 — docker pull baixando a imagem publicada** [cole o print aqui]
+**Print 5 — docker pull baixando a imagem publicada** 
+![CD docker](docs/images/dockerImgsh.png)
 
 ### Respostas
 
