@@ -166,7 +166,7 @@ Na arquitetura do projeto, a aplicação (container `app`) consegue se comunicar
 
 ![docker images](docs/images/teste1.png)
 
-## Print 8 
+## Print 9
 
 ![docker images](docs/images/teste2.png)
 
@@ -176,5 +176,91 @@ Na arquitetura do projeto, a aplicação (container `app`) consegue se comunicar
 
 **Arquivo do workflow:** `.github/workflows/ci.yml`
 
+**Gatilhos:** `push` e `pull_request`
+
+**O que o pipeline faz:**
+
+1. **Valida a sintaxe do arquivo de orquestração:** Executa `docker compose config` para garantir que a estrutura e as chaves do `compose.yaml` estejam corretas.
+2. **Builda a imagem da aplicação:** Constrói a imagem Docker do serviço `app` a partir das instruções do `Dockerfile`.
+3. **Sobe a stack de serviços:** Executa `docker compose up -d` para inicializar em segundo plano o container do banco de dados (`db`) e a aplicação (`app`).
+4. **Valida o funcionamento e testa a API:** Aguarda o container estar saudável/pronto para requisições e executa um *smoke test* simulando operações de CRUD via HTTP/API.
+5. **Limpa o ambiente:** Executa `docker compose down -v` para derrubar a stack e remover os volumes criados, garantindo um ambiente limpo para as próximas execuções.
+
+### Print 10 — execução verde ✅
+
+![Execução verde docker](docs/images/LogVerde.png)
+
 ---
 
+# 7. Quebra proposital do CI
+
+**O que eu quebrei:** Alterei o comando de inicialização `CMD` no `Dockerfile` para apontar para um arquivo inexistente (`src/indexx.js` ao invés de `src/index.js`).
+
+**Erro que apareceu no log:** `Error: Cannot find module '/app/src/indexx.js`
+(o runtime do Node.js interrompeu o processo com falha ao tentar localizar o script de entrada).
+
+**Como o CI reagiu:** O container da aplicação falhou imediatamente ao tentar subir. Como resultado, a etapa *"Aguardar a aplicação responder"* estourou por *timeout* ao tentar acessar a API sem sucesso, interrompendo a execução do pipeline com status de falha ❌ (status vermelho).
+
+**Como eu corrigi:** Ajustei o caminho do arquivo no parâmetro `CMD` do `Dockerfile` de volta para `src/index.js`, fiz o commit e dei o push na mesma branch (`quebra-proposital`), o que fez o workflow reexecutar e passar com sucesso ✅.
+
+---
+
+### Print 11 — execução vermelha ❌ + log do erro
+
+![Execução vermelha docker](docs/images/LogVermelho.png)
+
+![Log docker](docs/images/dockerlogs.png)
+
+---
+
+## 8. Dificuldades e aprendizados
+
+A experiência prática ao longo de todo o fluxo me deu uma visão clara do ciclo de vida DevOps, desde a conteinerização até a automação do CI. Com certeza vou aplicar esses conhecimentos nos meus próximos projetos. O projeto permitiu consolidar conceitos fundamentais de Docker, redes e integração contínua. Foi uma boa oportunidade para vivenciar a rotina DevOps e absorver práticas.
+
+---
+
+## 9. Checklist de AutoAvaliação
+
+- [x] O `Dockerfile` utiliza uma imagem base oficial e adequada.
+- [x] O build da aplicação foi gerado com sucesso sem erros.
+- [x] Foi criada e testada uma imagem funcional e otimizada.
+- [x] A rede customizada (`todo-net`) foi criada explicitamente.
+- [x] O container do app se comunica com o MySQL usando o nome do serviço (DNS interno).
+- [x] Os dados cadastrados na aplicação foram verificados diretamente no MySQL via `SELECT`.
+- [x] O arquivo `compose.yaml` roda a aplicação e o banco com um único comando (`docker compose up -d`).
+- [x] A porta do banco de dados **não** está exposta para o host (acesso isolado).
+- [x] Foram configurados `healthcheck` no banco e `depends_on` com `service_healthy` no app.
+- [x] Variáveis sensíveis foram gerenciadas via arquivo `.env` (não versionado) e disponibilizado um `.env.example`.
+- [x] **Teste de persistência validadas:** `docker compose down` mantém os dados e `docker compose down -v` limpa os dados do volume.
+- [x] O workflow do GitHub Actions em `.github/workflows/ci.yml` executa automaticamente nos eventos de `push` e `pull_request`.
+- [x] O pipeline passa por todas as etapas (validação do compose, build, subir stack, smoke test e cleanup).
+- [x] **Teste de quebra proposital:** A quebra intencional foi realizada em uma branch isolada (`quebra-proposital`) e gerou o log vermelho ❌ no CI.
+- [x] O erro foi corrigido na mesma branch, fazendo o pipeline passar para verde ✅ e finalizando com o Merge no Pull Request.
+
+
+## CD — Publicação no Docker Hub (EXTRA)
+
+**Print 1 — token criado no Docker Hub** ![CD docker](docs/images/tokencriado.png)
+
+**Print 2 — Secrets cadastrados no GitHub (DOCKERHUB_USERNAME e DOCKERHUB_TOKEN)** ![CD docker](docs/images/secretscadastro.png)
+
+**Print 3 — workflow de CD verde na aba Actions** [cole o print aqui]
+
+**Print 4 — imagem publicada no Docker Hub** [cole o print aqui]
+
+**Print 5 — docker pull baixando a imagem publicada** [cole o print aqui]
+
+### Respostas
+
+1. **O que é o Docker Hub?**
+   É um repositório público e privado em nuvem mantido pela Docker para armazenar, compartilhar e gerenciar imagens de contêineres.
+
+2. **Diferença entre CI e CD:**
+   * **CI (Continuous Integration / Integração Contínua):** É a prática de automatizar a compilação, testes e validação do código sempre que novos trechos são enviados ao repositório, garantindo a qualidade do sistema.
+   * **CD (Continuous Delivery ou Continuous Deployment / Entrega ou Implantação Contínua):** É a automação do processo de empacotamento, publicação e disponibilização da aplicação pronta para uso em um registro (como o Docker Hub) ou diretamente no ambiente de produção.
+
+3. **Por que usar token e Secrets em vez de escrever usuário e senha no `cd.yml`:**
+   Por questões de segurança. O arquivo `cd.yml` fica visível no histórico do repositório, e expor senhas diretamente em código (hardcoded) gera graves vazamentos. O uso de **Secrets** oculta dados sensíveis, e o **token de acesso** permite revogar permissões específicas a qualquer momento sem precisar alterar a senha principal da conta.
+
+4. **O que significa a tag `latest`:**
+   É a tag padrão (default) atribuída a uma imagem Docker quando nenhuma versão específica é informada. Por convenção, ela aponta para a build mais recente publicada da aplicação.
